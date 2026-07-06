@@ -23,7 +23,7 @@ router.get('/', (req, res) => {
     gemini: {
       hasKey: Boolean(store.getSetting('GEMINI_API_KEY') || process.env.GEMINI_API_KEY),
       maskedKey: maskKey(store.getSetting('GEMINI_API_KEY') || process.env.GEMINI_API_KEY),
-      model: store.getSetting('GEMINI_MODEL') || process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+      model: store.getSetting('GEMINI_MODEL') || process.env.GEMINI_MODEL || 'gemini-flash-latest',
     },
     glm: {
       hasKey: Boolean(store.getSetting('GLM_API_KEY') || process.env.GLM_API_KEY),

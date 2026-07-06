@@ -22,7 +22,7 @@ function client() {
 }
 
 function currentModel() {
-  return store.getSetting('GEMINI_MODEL') || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  return store.getSetting('GEMINI_MODEL') || process.env.GEMINI_MODEL || 'gemini-flash-latest';
 }
 
 function textModel() {
