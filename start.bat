@@ -101,7 +101,9 @@ echo.
 echo Dang khoi dong server, trinh duyet se tu mo sau vai giay...
 start "" cmd /c "timeout /t 4 >nul && start http://localhost:3000"
 
-call "%NODEDIR%npm.cmd" start
+REM Goi thang node.exe thay vi "npm start" - tranh loi npm khong truyen dung
+REM bien PATH cho tien trinh con no tu sinh ra tren mot so may Windows.
+"%NODEDIR%node.exe" src\server.js
 
 echo.
 echo Server da dung. Nhan phim bat ky de dong cua so nay.
