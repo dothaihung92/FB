@@ -29,14 +29,26 @@ exit /b
 echo Dang tai va cai dat Node.js LTS, vui long doi ^(co the mat vai phut^)...
 echo.
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\install-node.ps1"
-
-set "PATH=%PATH%;%ProgramFiles%\nodejs;%ProgramFiles(x86)%\nodejs"
-where node >nul 2>nul
-if errorlevel 1 goto install_failed
-echo.
-echo Da cai dat Node.js thanh cong!
 echo.
 goto node_ready
+
+:node_ready
+REM Tu do tim thu muc cai Node.js thuc te tren dia, khong phu thuoc vao viec
+REM bien PATH cua cua so cmd hien tai da duoc refresh hay chua (winget/msiexec
+REM cap nhat PATH o registry, nhung cua so cmd dang chay se khong tu thay ngay).
+set "NODEDIR="
+for /f "delims=" %%p in ('where node 2^>nul') do if not defined NODEDIR set "NODEDIR=%%~dpp"
+if defined NODEDIR goto have_nodedir
+if exist "%ProgramFiles%\nodejs\node.exe" set "NODEDIR=%ProgramFiles%\nodejs\"
+if not defined NODEDIR if exist "%ProgramFiles(x86)%\nodejs\node.exe" set "NODEDIR=%ProgramFiles(x86)%\nodejs\"
+
+:have_nodedir
+if not defined NODEDIR goto install_failed
+set "PATH=%PATH%;%NODEDIR%"
+
+for /f "tokens=*" %%v in ('"%NODEDIR%node.exe" -v') do echo Da tim thay Node.js phien ban: %%v
+echo.
+goto deps_check
 
 :install_failed
 echo.
@@ -45,13 +57,10 @@ echo Vui long tai va cai thu cong tai https://nodejs.org roi chay lai start.bat
 pause
 exit /b 1
 
-:node_ready
-for /f "tokens=*" %%v in ('node -v') do echo Da tim thay Node.js phien ban: %%v
-echo.
-
+:deps_check
 if exist "node_modules" goto deps_ready
 echo Dang cai dat thu vien can thiet, vui long doi ^(co the mat vai phut^)...
-call npm install
+call "%NODEDIR%npm.cmd" install
 if errorlevel 1 goto deps_failed
 goto deps_ready
 
@@ -83,7 +92,7 @@ echo.
 echo Dang khoi dong server, trinh duyet se tu mo sau vai giay...
 start "" cmd /c "timeout /t 4 >nul && start http://localhost:3000"
 
-call npm start
+call "%NODEDIR%npm.cmd" start
 
 echo.
 echo Server da dung. Nhan phim bat ky de dong cua so nay.
