@@ -1,0 +1,40 @@
+<%- include('partials/header', { active: 'connect' }) %>
+
+<% if (flash) { %><div class="flash"><%= flash %></div><% } %>
+
+<div class="card">
+  <h3>🔗 Kết nối Facebook Page</h3>
+
+  <% if (connected) { %>
+    <p>✅ Đang kết nối với Page: <strong><%= pageName %></strong> (ID: <%= pageId %>)</p>
+    <form method="post" action="/connect/disconnect" onsubmit="return confirm('Ngắt kết nối Page hiện tại?')">
+      <button type="submit" class="danger">Ngắt kết nối</button>
+    </form>
+  <% } else if (!hasAppCreds) { %>
+    <p>Bạn cần tạo <strong>Facebook App</strong> một lần (bắt buộc theo yêu cầu của Meta,
+      không thể tự động hoá bước này vì cần đăng nhập bằng chính tài khoản Facebook của bạn).
+      Sau đó dán <code>FB_APP_ID</code> và <code>FB_APP_SECRET</code> vào file <code>.env</code>
+      rồi khởi động lại phần mềm — các bước còn lại (lấy Page Access Token) sẽ được tự động hoá
+      hoàn toàn, bạn chỉ cần bấm nút và đăng nhập Facebook như bình thường.</p>
+
+    <ol>
+      <li>Vào <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener">developers.facebook.com/apps</a>
+        → <strong>Create App</strong> → chọn loại <strong>Business</strong>.</li>
+      <li>Trong App vừa tạo, vào <strong>Add Product</strong> → thêm <strong>Facebook Login for Business</strong>.</li>
+      <li>Vào <strong>Facebook Login → Settings</strong>, thêm vào ô <em>Valid OAuth Redirect URIs</em> đúng URL này:
+        <br /><code><%= redirectUri %></code></li>
+      <li>Vào <strong>App Settings → Basic</strong>, copy <strong>App ID</strong> và <strong>App Secret</strong>
+        dán vào file <code>.env</code> (biến <code>FB_APP_ID</code>, <code>FB_APP_SECRET</code>), lưu lại rồi
+        khởi động lại phần mềm (chạy lại <code>start.bat</code>).</li>
+      <li>Quay lại trang này, bấm nút "Kết nối với Facebook" bên dưới.</li>
+    </ol>
+  <% } else { %>
+    <p>Đã có thông tin App. Bấm nút bên dưới, đăng nhập Facebook bằng tài khoản quản trị Page của bạn,
+      cấp quyền quản lý Page — hệ thống sẽ tự động lấy Page ID và Page Access Token, không cần thao tác thủ công.</p>
+    <a class="btn" href="/connect/facebook" style="text-decoration:none; display:inline-block;">
+      🔵 Kết nối với Facebook
+    </a>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>

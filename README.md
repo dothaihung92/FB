@@ -24,34 +24,35 @@ npm install
 cp .env.example .env
 ```
 
-## 2. Lấy Facebook Page Access Token
+## 2. Kết nối Facebook Page (tự động, chỉ cần tạo App 1 lần)
+
+Việc lấy Page Access Token đã được **tự động hoá** ngay trong dashboard — bạn không cần
+vào Graph API Explorer hay tự đổi token thủ công nữa. Chỉ có **một bước duy nhất bắt buộc
+phải tự làm** vì Meta yêu cầu xác thực bằng chính tài khoản Facebook của bạn: tạo App.
 
 1. Vào https://developers.facebook.com/apps → **Create App** → chọn loại "Business".
-2. Trong app, thêm sản phẩm **Facebook Login for Business**.
-3. Vào **Graph API Explorer** (https://developers.facebook.com/tools/explorer/):
-   - Chọn App vừa tạo.
-   - Chọn "User Token" → cấp quyền: `pages_show_list`, `pages_manage_posts`,
-     `pages_read_engagement`, `pages_read_user_content` (thêm `pages_messaging` nếu muốn
-     trả lời Messenger).
-   - Bấm "Generate Access Token", đăng nhập bằng tài khoản admin của Page.
-4. Đổi User Token vừa lấy sang **Page Access Token**:
-   `GET /me/accounts?access_token=<USER_TOKEN>` → lấy `access_token` ứng với Page của bạn.
-5. (Khuyến nghị) Đổi sang token dài hạn (không hết hạn) bằng cách trước tiên đổi User Token
-   sang long-lived token:
-   `GET /oauth/access_token?grant_type=fb_exchange_token&client_id=<APP_ID>&client_secret=<APP_SECRET>&fb_exchange_token=<USER_TOKEN>`
-   rồi lặp lại bước 4 với long-lived user token — Page token lấy được sẽ không hết hạn
-   miễn Page vẫn còn active và app chưa bị thu hồi quyền.
-6. Điền vào `.env`:
+2. Trong app, vào **Add Product** → thêm **Facebook Login for Business**.
+3. Vào **Facebook Login → Settings**, thêm vào ô *Valid OAuth Redirect URIs*:
+   `http://localhost:3000/connect/facebook/callback`
+   (nếu bạn đổi `PORT` trong `.env` thì sửa số cổng trong URL này cho khớp).
+4. Vào **App Settings → Basic**, copy **App ID** và **App Secret**, điền vào `.env`:
    ```
-   FB_PAGE_ID=...
-   FB_PAGE_ACCESS_TOKEN=...
    FB_APP_ID=...
    FB_APP_SECRET=...
    ```
-7. Nếu App đang ở chế độ Development, chỉ tài khoản có vai trò trong App (Admin/Editor/Tester)
-   mới dùng được. Để dùng cho Page thật với người ngoài, cần nộp **App Review** xin quyền
-   `pages_manage_posts` (Advanced Access) — Meta sẽ yêu cầu quay video demo mô tả cách app dùng
-   quyền này.
+5. Khởi động lại phần mềm (`npm start` hoặc chạy lại `start.bat`).
+6. Mở dashboard → vào tab **Kết nối Facebook** → bấm **"Kết nối với Facebook"** → đăng nhập
+   Facebook bằng tài khoản admin của Page → cấp quyền quản lý Page. Xong! Hệ thống tự động
+   lấy Page ID + Page Access Token (bản dài hạn, không hết hạn) và lưu lại, không cần thao
+   tác gì thêm.
+
+Nếu App đang ở chế độ Development, chỉ tài khoản có vai trò trong App (Admin/Editor/Tester)
+mới đăng nhập được — đủ dùng cho một mình bạn quản lý Page của bạn. Để mời thêm nhân viên
+khác cùng dùng, thêm họ vào vai trò **Tester** trong App, hoặc nộp **App Review** xin quyền
+`pages_manage_posts` (Advanced Access) nếu muốn public app.
+
+*(Muốn tự lấy token thủ công qua Graph API Explorer thay vì dùng nút "Kết nối Facebook"
+thì vẫn được — chỉ cần điền `FB_PAGE_ID` và `FB_PAGE_ACCESS_TOKEN` trực tiếp vào `.env`.)*
 
 ## 3. Cấu hình Claude API (sinh nội dung AI)
 

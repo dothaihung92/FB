@@ -1,14 +1,21 @@
 const axios = require('axios');
+const store = require('../db');
 
 const GRAPH_VERSION = 'v21.0';
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
 
+/**
+ * Uu tien Page ID/Token da luu qua man hinh "Ket noi Facebook" (OAuth, tu
+ * dong, khong can khoi dong lai app); neu chua ket noi thi dung gia tri cau
+ * hinh thu cong trong .env (danh cho ai muon tu lay token qua Graph API
+ * Explorer nhu huong dan cu trong README).
+ */
 function requireConfig() {
-  const pageId = process.env.FB_PAGE_ID;
-  const token = process.env.FB_PAGE_ACCESS_TOKEN;
+  const pageId = store.getSetting('FB_PAGE_ID') || process.env.FB_PAGE_ID;
+  const token = store.getSetting('FB_PAGE_ACCESS_TOKEN') || process.env.FB_PAGE_ACCESS_TOKEN;
   if (!pageId || !token) {
     throw new Error(
-      'Thiếu FB_PAGE_ID hoặc FB_PAGE_ACCESS_TOKEN trong .env. Xem README.md để lấy Page Access Token.'
+      'Chưa kết nối Facebook Page. Vào mục "Kết nối Facebook" trên dashboard để liên kết Page tự động.'
     );
   }
   return { pageId, token };

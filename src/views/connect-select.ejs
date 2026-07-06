@@ -1,0 +1,14 @@
+<%- include('partials/header', { active: 'connect' }) %>
+
+<div class="card">
+  <h3>Chọn Page bạn muốn kết nối</h3>
+  <p>Tài khoản Facebook của bạn đang quản lý nhiều Page. Chọn đúng Page cần dùng cho phần mềm này:</p>
+  <% pages.forEach(function(page) { %>
+    <form method="post" action="/connect/select" class="row" style="margin-bottom:8px;">
+      <input type="hidden" name="page_id" value="<%= page.id %>" />
+      <button type="submit"><%= page.name %></button>
+    </form>
+  <% }); %>
+</div>
+
+<%- include('partials/footer') %>

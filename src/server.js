@@ -7,6 +7,7 @@ require('./db'); // đảm bảo DB & bảng được khởi tạo
 const basicAuth = require('./middleware/basicAuth');
 const postsRouter = require('./routes/posts');
 const leadsRouter = require('./routes/leads');
+const connectRouter = require('./routes/connect');
 const { startScheduler } = require('./jobs/scheduler');
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(basicAuth);
 app.get('/', (req, res) => res.redirect('/posts'));
 app.use('/posts', postsRouter);
 app.use('/leads', leadsRouter);
+app.use('/connect', connectRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);
