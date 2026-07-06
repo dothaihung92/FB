@@ -56,20 +56,35 @@ thì vẫn được — chỉ cần điền `FB_PAGE_ID` và `FB_PAGE_ACCESS_TOK
 
 ## 3. Cấu hình AI viết nội dung
 
-Chọn 1 trong 2 nhà cung cấp AI bằng biến `AI_PROVIDER` trong `.env` (chỉ cần điền API key
-của bên bạn chọn dùng):
+Chọn 1 trong 3 nhà cung cấp AI. Có 2 cách:
 
-**Dùng Claude (mặc định, khuyến nghị chất lượng cao nhất):**
+**Cách 1 (khuyến nghị) — chọn ngay trên dashboard:** chạy app lên, vào mục **"Cài đặt AI"**,
+chọn nhà cung cấp bằng nút radio, dán API key, bấm Lưu — áp dụng ngay, không cần sửa file
+hay khởi động lại. Có nút "Kiểm tra kết nối" để thử ngay xem key đúng chưa.
+
+**Cách 2 — sửa trực tiếp trong `.env`:**
+
+Dùng Claude (chất lượng cao nhất, trả phí):
 ```
 AI_PROVIDER=claude
 ANTHROPIC_API_KEY=<lấy tại https://console.anthropic.com/>
 ```
 
-**Dùng Gemini (có gói miễn phí):**
+Dùng Gemini (có gói miễn phí):
 ```
 AI_PROVIDER=gemini
 GEMINI_API_KEY=<lấy miễn phí tại https://aistudio.google.com/apikey>
 ```
+
+Dùng GLM (Zhipu AI / Z.ai):
+```
+AI_PROVIDER=glm
+GLM_API_KEY=<lấy tại https://open.bigmodel.cn/>
+GLM_MODEL=glm-5.2
+```
+*(Nếu `GLM_MODEL` báo lỗi model không tồn tại, kiểm tra lại tên model chính xác trong tài
+liệu nhà cung cấp — họ hay đổi tên/ra bản mới. Dùng dịch vụ quốc tế thì đổi `GLM_BASE_URL`
+thành `https://api.z.ai/api/paas/v4`.)*
 
 ## 4. Chạy ứng dụng
 

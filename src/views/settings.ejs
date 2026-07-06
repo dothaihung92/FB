@@ -1,0 +1,72 @@
+<%- include('partials/header', { active: 'settings' }) %>
+
+<% if (flash) { %><div class="flash"><%= flash %></div><% } %>
+
+<div class="card">
+  <h3>🧠 Cài đặt AI viết nội dung</h3>
+  <p class="meta">Chọn nhà cung cấp AI và dán API key ngay tại đây — không cần sửa file .env,
+    áp dụng ngay lập tức, không cần khởi động lại phần mềm.</p>
+
+  <form method="post" action="/settings">
+    <div class="card" style="background:#0c1526;">
+      <label>
+        <input type="radio" name="provider" value="claude" <%= provider === 'claude' ? 'checked' : '' %> />
+        <strong>Claude (Anthropic)</strong> — chất lượng cao nhất, trả phí
+      </label>
+      <div class="row">
+        <input type="text" name="anthropic_api_key" placeholder="<%= claude.hasKey ? claude.maskedKey : 'sk-ant-...' %>" style="flex:1;" />
+      </div>
+      <div class="row">
+        <label style="color:#93a1c4; font-size:12px;">Model:</label>
+        <input type="text" name="claude_model" value="<%= claude.model %>" />
+      </div>
+      <p class="meta">Lấy API key tại <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a></p>
+    </div>
+
+    <div class="card" style="background:#0c1526;">
+      <label>
+        <input type="radio" name="provider" value="gemini" <%= provider === 'gemini' ? 'checked' : '' %> />
+        <strong>Gemini (Google)</strong> — có gói miễn phí
+      </label>
+      <div class="row">
+        <input type="text" name="gemini_api_key" placeholder="<%= gemini.hasKey ? gemini.maskedKey : 'AIzaSy...' %>" style="flex:1;" />
+      </div>
+      <div class="row">
+        <label style="color:#93a1c4; font-size:12px;">Model:</label>
+        <input type="text" name="gemini_model" value="<%= gemini.model %>" />
+      </div>
+      <p class="meta">Lấy API key miễn phí tại <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></p>
+    </div>
+
+    <div class="card" style="background:#0c1526;">
+      <label>
+        <input type="radio" name="provider" value="glm" <%= provider === 'glm' ? 'checked' : '' %> />
+        <strong>GLM (Zhipu AI / Z.ai)</strong>
+      </label>
+      <div class="row">
+        <input type="text" name="glm_api_key" placeholder="<%= glm.hasKey ? glm.maskedKey : 'API key GLM...' %>" style="flex:1;" />
+      </div>
+      <div class="row">
+        <label style="color:#93a1c4; font-size:12px;">Model:</label>
+        <input type="text" name="glm_model" value="<%= glm.model %>" />
+      </div>
+      <div class="row">
+        <label style="color:#93a1c4; font-size:12px;">Base URL:</label>
+        <input type="text" name="glm_base_url" value="<%= glm.baseUrl %>" style="flex:1;" />
+      </div>
+      <p class="meta">Lấy API key tại <a href="https://open.bigmodel.cn/" target="_blank" rel="noopener">open.bigmodel.cn</a>
+        (dùng dịch vụ quốc tế thì đổi Base URL thành <code>https://api.z.ai/api/paas/v4</code>).
+        Kiểm tra đúng tên model đang hỗ trợ trong tài liệu nhà cung cấp nếu <code><%= glm.model %></code> báo lỗi không tồn tại.</p>
+    </div>
+
+    <div class="row">
+      <button type="submit">💾 Lưu cài đặt</button>
+    </div>
+  </form>
+
+  <form method="post" action="/settings/test" style="margin-top:8px;">
+    <button type="submit" class="secondary">🔍 Kiểm tra kết nối (sinh thử 1 chủ đề)</button>
+  </form>
+</div>
+
+<%- include('partials/footer') %>

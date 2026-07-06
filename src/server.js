@@ -8,6 +8,7 @@ const basicAuth = require('./middleware/basicAuth');
 const postsRouter = require('./routes/posts');
 const leadsRouter = require('./routes/leads');
 const connectRouter = require('./routes/connect');
+const settingsRouter = require('./routes/settings');
 const { startScheduler } = require('./jobs/scheduler');
 
 const app = express();
@@ -24,6 +25,7 @@ app.get('/', (req, res) => res.redirect('/posts'));
 app.use('/posts', postsRouter);
 app.use('/leads', leadsRouter);
 app.use('/connect', connectRouter);
+app.use('/settings', settingsRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);

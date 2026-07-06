@@ -1,4 +1,5 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const store = require('../../db');
 const {
   BRAND_CONTEXT,
   TOPICS_PROMPT,
@@ -8,16 +9,23 @@ const {
   safeParseAnalysis,
 } = require('./shared');
 
-let _client = null;
-function client() {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('Thiếu ANTHROPIC_API_KEY trong .env');
-  }
-  if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  return _client;
+// Doc cau hinh tu Settings (luu qua dashboard, ap dung ngay khong can khoi
+// dong lai) truoc, neu chua cau hinh thi lay tu .env.
+function apiKey() {
+  return store.getSetting('ANTHROPIC_API_KEY') || process.env.ANTHROPIC_API_KEY;
 }
 
-const MODEL = process.env.CLAUDE_MODEL || 'claude-opus-4-8';
+function client() {
+  const key = apiKey();
+  if (!key) {
+    throw new Error('Thiếu Anthropic API Key. Vào "Cài đặt AI" trên dashboard để điền.');
+  }
+  return new Anthropic({ apiKey: key });
+}
+
+function currentModel() {
+  return store.getSetting('CLAUDE_MODEL') || process.env.CLAUDE_MODEL || 'claude-opus-4-8';
+}
 
 function extractText(message) {
   const block = message.content.find((b) => b.type === 'text');
@@ -26,7 +34,7 @@ function extractText(message) {
 
 async function generateTopics(count = 5) {
   const res = await client().messages.create({
-    model: MODEL,
+    model: currentModel(),
     max_tokens: 1024,
     system: BRAND_CONTEXT,
     messages: [{ role: 'user', content: TOPICS_PROMPT(count) }],
@@ -36,7 +44,7 @@ async function generateTopics(count = 5) {
 
 async function generatePost(topic) {
   const res = await client().messages.create({
-    model: MODEL,
+    model: currentModel(),
     max_tokens: 1200,
     system: BRAND_CONTEXT,
     messages: [{ role: 'user', content: POST_PROMPT(topic) }],
@@ -46,7 +54,7 @@ async function generatePost(topic) {
 
 async function analyzeComment(commentText) {
   const res = await client().messages.create({
-    model: MODEL,
+    model: currentModel(),
     max_tokens: 600,
     system: BRAND_CONTEXT,
     output_config: {
@@ -77,4 +85,11 @@ async function analyzeComment(commentText) {
   return safeParseAnalysis(extractText(res));
 }
 
-module.exports = { generateTopics, generatePost, analyzeComment, MODEL };
+module.exports = {
+  generateTopics,
+  generatePost,
+  analyzeComment,
+  get MODEL() {
+    return currentModel();
+  },
+};
