@@ -1,4 +1,13 @@
 @echo off
+REM Neu cua so nay bi dong dot ngot vi loi ben trong, ban se khong kip doc
+REM thong bao loi. De tranh dieu do, lan chay dau tien se tu mo lai chinh no
+REM trong mot cua so cmd "giu nguyen" - khong bao gio tu dong tat.
+if defined FB_AI_PERSISTENT goto main
+set "FB_AI_PERSISTENT=1"
+cmd /k call "%~f0"
+exit /b
+
+:main
 setlocal enabledelayedexpansion
 title FB AI Page Manager
 cd /d "%~dp0"
@@ -34,8 +43,8 @@ goto node_ready
 
 :node_ready
 REM Tu do tim thu muc cai Node.js thuc te tren dia, khong phu thuoc vao viec
-REM bien PATH cua cua so cmd hien tai da duoc refresh hay chua (winget/msiexec
-REM cap nhat PATH o registry, nhung cua so cmd dang chay se khong tu thay ngay).
+REM bien PATH cua cua so cmd hien tai da duoc refresh hay chua - winget/msiexec
+REM cap nhat PATH o registry, nhung cua so cmd dang chay se khong tu thay ngay.
 set "NODEDIR="
 for /f "delims=" %%p in ('where node 2^>nul') do if not defined NODEDIR set "NODEDIR=%%~dpp"
 if defined NODEDIR goto have_nodedir
