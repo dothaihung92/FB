@@ -1,0 +1,57 @@
+<%- include('partials/header', { active: 'posts' }) %>
+
+<% if (flash) { %><div class="flash"><%= flash %></div><% } %>
+
+<div class="card">
+  <h3>Sinh bài viết mới bằng AI</h3>
+  <form class="row" method="post" action="/posts/generate">
+    <label>Số bài: <input type="text" name="count" value="1" style="width:40px" /></label>
+    <button type="submit">✨ Sinh bài nháp</button>
+  </form>
+</div>
+
+<% if (!posts.length) { %>
+  <div class="empty">Chưa có bài viết nào. Hãy bấm "Sinh bài nháp" để AI viết bài đầu tiên.</div>
+<% } %>
+
+<% posts.forEach(function(post) { %>
+  <div class="card">
+    <div class="meta">
+      #<%= post.id %> · chủ đề: <%= post.topic || '—' %> ·
+      <span class="badge <%= post.status %>"><%= post.status %></span>
+      <% if (post.scheduled_at) { %> · lịch đăng: <%= post.scheduled_at %><% } %>
+      <% if (post.fb_post_id) { %> · fb_post_id: <%= post.fb_post_id %><% } %>
+      <% if (post.error) { %> · <span style="color:#ef4444">lỗi: <%= post.error %></span><% } %>
+    </div>
+
+    <form method="post" action="/posts/<%= post.id %>/edit">
+      <textarea name="content"><%= post.content %></textarea>
+      <div class="row">
+        <button type="submit" class="secondary">💾 Lưu chỉnh sửa</button>
+      </div>
+    </form>
+
+    <div class="row">
+      <form class="inline" method="post" action="/posts/<%= post.id %>/regenerate">
+        <button type="submit" class="secondary">🔁 Sinh lại bằng AI</button>
+      </form>
+
+      <form class="inline row" method="post" action="/posts/<%= post.id %>/schedule">
+        <input type="datetime-local" name="scheduled_at" required />
+        <button type="submit">📅 Lên lịch đăng</button>
+      </form>
+
+      <form class="inline" method="post" action="/posts/<%= post.id %>/publish-now"
+            onsubmit="return confirm('Đăng bài này lên Facebook Page ngay bây giờ?')">
+        <button type="submit" class="success">🚀 Đăng ngay</button>
+      </form>
+
+      <form class="inline" method="post" action="/posts/<%= post.id %>/delete"
+            onsubmit="return confirm('Xoá bài nháp này?')">
+        <button type="submit" class="danger">🗑 Xoá</button>
+      </form>
+    </div>
+  </div>
+<% }); %>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,22 @@
+{
+  "name": "fb-ai-page-manager",
+  "version": "1.0.0",
+  "description": "AI tool that auto-generates content, schedules posts, and auto-replies to leads on a Facebook Page, targeted at business owners/household businesses needing accounting services.",
+  "type": "commonjs",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "cron": "node src/jobs/runner.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "axios": "^1.7.7",
+    "better-sqlite3": "^11.5.0",
+    "body-parser": "^1.20.3",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.21.1",
+    "node-cron": "^3.0.3"
+  }
+}
