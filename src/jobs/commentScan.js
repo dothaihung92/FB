@@ -1,4 +1,4 @@
-const { db } = require('../db');
+const store = require('../db');
 const fb = require('../services/facebook');
 const ai = require('../services/ai');
 
@@ -11,7 +11,7 @@ const AUTO_REPLY = () => String(process.env.AUTO_REPLY_COMMENTS || 'true') === '
  */
 async function runCommentScan({ postLimit = 10, commentLimit = 25 } = {}) {
   const comments = await fb.listRecentCommentsAcrossPosts(postLimit, commentLimit);
-  const known = new Set(db.prepare('SELECT object_id FROM leads').all().map((r) => r.object_id));
+  const known = store.knownLeadObjectIds();
 
   const newLeads = [];
   for (const c of comments) {
@@ -20,22 +20,17 @@ async function runCommentScan({ postLimit = 10, commentLimit = 25 } = {}) {
 
     const analysis = await ai.analyzeComment(c.message);
 
-    const info = db
-      .prepare(
-        `INSERT INTO leads
-         (source, fb_user_id, fb_user_name, object_id, post_id, message, ai_reply, interest_score, contact_info)
-         VALUES ('comment', ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      .run(
-        c.from?.id || null,
-        c.from?.name || null,
-        c.id,
-        c.post_id,
-        c.message,
-        analysis.suggested_reply,
-        analysis.interest_score,
-        analysis.extracted_contact
-      );
+    const lead = store.insertLead({
+      source: 'comment',
+      fb_user_id: c.from?.id || null,
+      fb_user_name: c.from?.name || null,
+      object_id: c.id,
+      post_id: c.post_id,
+      message: c.message,
+      ai_reply: analysis.suggested_reply,
+      interest_score: analysis.interest_score,
+      contact_info: analysis.extracted_contact,
+    });
 
     let replied = false;
     if (AUTO_REPLY() && analysis.is_potential_lead && analysis.suggested_reply) {
@@ -46,9 +41,9 @@ async function runCommentScan({ postLimit = 10, commentLimit = 25 } = {}) {
         // Bỏ qua lỗi trả lời (VD: quyền bị thu hồi), lead vẫn được lưu để xử lý tay.
       }
     }
-    db.prepare('UPDATE leads SET replied = ? WHERE id = ?').run(replied ? 1 : 0, info.lastInsertRowid);
+    store.updateLead(lead.id, { replied: replied ? 1 : 0 });
 
-    newLeads.push({ id: info.lastInsertRowid, score: analysis.interest_score, replied });
+    newLeads.push({ id: lead.id, score: analysis.interest_score, replied });
   }
   return newLeads;
 }

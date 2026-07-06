@@ -83,4 +83,5 @@ Mở trình duyệt: `http://localhost:3000` (đăng nhập bằng `DASHBOARD_US
   Chỉ nên gọi API tối đa vài chục request/giờ (dùng cho 1 Page) — không cấu hình chạy dồn dập.
 - Không tự động nhắn tin hàng loạt (cold message) tới người lạ — vi phạm chính sách Messenger
   Platform và Luật An ninh mạng/bảo vệ dữ liệu cá nhân nếu không có sự đồng ý.
-- File dữ liệu SQLite nằm ở `data/app.db` — nên backup định kỳ.
+- File dữ liệu nằm ở `data/store.json` (định dạng JSON đơn giản, không dùng module
+  native nên không cần biên dịch/cài thêm gì trên Windows) — nên backup định kỳ.

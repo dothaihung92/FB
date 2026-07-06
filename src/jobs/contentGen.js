@@ -1,4 +1,4 @@
-const { db } = require('../db');
+const store = require('../db');
 const ai = require('../services/ai');
 
 /**
@@ -7,25 +7,19 @@ const ai = require('../services/ai');
  * (trừ khi AUTO_PUBLISH=true thì job publish sẽ tự đăng theo lịch).
  */
 async function runContentGeneration({ topicsToGenerate = 5, postsToWrite = 1 } = {}) {
-  const unusedCount = db.prepare('SELECT COUNT(*) AS c FROM topics WHERE used = 0').get().c;
-  if (unusedCount < 3) {
+  if (store.countUnusedTopics() < 3) {
     const topics = await ai.generateTopics(topicsToGenerate);
-    const insert = db.prepare('INSERT INTO topics (title) VALUES (?)');
-    for (const t of topics) insert.run(t);
+    for (const t of topics) store.insertTopic(t);
   }
 
-  const pending = db
-    .prepare('SELECT * FROM topics WHERE used = 0 ORDER BY id ASC LIMIT ?')
-    .all(postsToWrite);
+  const pending = store.listUnusedTopics(postsToWrite);
 
   const created = [];
   for (const topic of pending) {
     const content = await ai.generatePost(topic.title);
-    const info = db
-      .prepare('INSERT INTO posts (topic, content, status) VALUES (?, ?, ?)')
-      .run(topic.title, content, 'draft');
-    db.prepare('UPDATE topics SET used = 1 WHERE id = ?').run(topic.id);
-    created.push({ id: info.lastInsertRowid, topic: topic.title });
+    const post = store.insertPost({ topic: topic.title, content, status: 'draft' });
+    store.markTopicUsed(topic.id);
+    created.push({ id: post.id, topic: topic.title });
   }
   return created;
 }

@@ -1,12 +1,12 @@
 const express = require('express');
-const { db } = require('../db');
+const store = require('../db');
 const fb = require('../services/facebook');
 const { runCommentScan } = require('../jobs/commentScan');
 
 const router = express.Router();
 
 router.get('/', (req, res) => {
-  const leads = db.prepare('SELECT * FROM leads ORDER BY interest_score DESC, id DESC LIMIT 200').all();
+  const leads = store.listLeads({ limit: 200 });
   res.render('leads', { leads, flash: req.query.flash || null });
 });
 
@@ -21,13 +21,13 @@ router.post('/scan', async (req, res) => {
 
 router.post('/:id/reply', async (req, res) => {
   try {
-    const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(req.params.id);
+    const lead = store.getLead(req.params.id);
     if (!lead) return res.redirect('/leads');
     const message = req.body.message || lead.ai_reply;
     if (lead.source === 'comment') {
       await fb.replyToComment(lead.object_id, message);
     }
-    db.prepare('UPDATE leads SET replied = 1, ai_reply = ? WHERE id = ?').run(message, lead.id);
+    store.updateLead(lead.id, { replied: 1, ai_reply: message });
     res.redirect('/leads?flash=' + encodeURIComponent('Đã gửi phản hồi.'));
   } catch (err) {
     const msg = err.response?.data?.error?.message || err.message;

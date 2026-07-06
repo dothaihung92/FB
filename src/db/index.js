@@ -1,63 +1,204 @@
 const path = require('path');
 const fs = require('fs');
-const Database = require('better-sqlite3');
+
+// Kho luu tru don gian dua tren file JSON - khong dung module native nao,
+// tranh loi bien dich (native build) hay gap tren Windows voi better-sqlite3/
+// sqlite3. Phu hop voi quy mo du lieu cua app nay (mot Page, vai chuc/tram
+// ban ghi), khong can toi mot database server that su.
 
 const dataDir = path.join(__dirname, '..', '..', 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-const db = new Database(path.join(dataDir, 'app.db'));
-db.pragma('journal_mode = WAL');
+const storePath = path.join(dataDir, 'store.json');
 
-db.exec(`
-CREATE TABLE IF NOT EXISTS posts (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  topic TEXT,
-  content TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'draft', -- draft | scheduled | published | failed
-  scheduled_at DATETIME,
-  fb_post_id TEXT,
-  error TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+function emptyStore() {
+  return {
+    posts: [],
+    leads: [],
+    topics: [],
+    settings: {},
+    seq: { posts: 0, leads: 0, topics: 0 },
+  };
+}
 
-CREATE TABLE IF NOT EXISTS leads (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  source TEXT NOT NULL, -- comment | messenger
-  fb_user_id TEXT,
-  fb_user_name TEXT,
-  object_id TEXT, -- comment_id or conversation/message id
-  post_id TEXT,   -- fb post id the comment belongs to
-  message TEXT,
-  ai_reply TEXT,
-  replied INTEGER DEFAULT 0,
-  interest_score INTEGER DEFAULT 0, -- 0-100 do AI chấm mức độ tiềm năng
-  contact_info TEXT, -- sđt/email nếu khách tự để lại
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+function load() {
+  if (!fs.existsSync(storePath)) return emptyStore();
+  try {
+    const raw = fs.readFileSync(storePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Object.assign(emptyStore(), parsed);
+  } catch {
+    // File hong/rong - bat dau lai voi kho trong thay vi crash ca app.
+    return emptyStore();
+  }
+}
 
-CREATE TABLE IF NOT EXISTS settings (
-  key TEXT PRIMARY KEY,
-  value TEXT
-);
+let state = load();
 
-CREATE TABLE IF NOT EXISTS topics (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
-  used INTEGER DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-`);
+function save() {
+  // Ghi ra file tam roi doi ten (atomic) de tranh hong du lieu neu app bi tat
+  // dot ngot giua luc dang ghi.
+  const tmpPath = storePath + '.tmp';
+  fs.writeFileSync(tmpPath, JSON.stringify(state, null, 2), 'utf8');
+  fs.renameSync(tmpPath, storePath);
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function nextId(table) {
+  state.seq[table] = (state.seq[table] || 0) + 1;
+  return state.seq[table];
+}
+
+// ---------------------------------------------------------------- settings
 
 function getSetting(key, fallback = null) {
-  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
-  return row ? row.value : fallback;
+  return Object.prototype.hasOwnProperty.call(state.settings, key)
+    ? state.settings[key]
+    : fallback;
 }
 
 function setSetting(key, value) {
-  db.prepare(
-    'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
-  ).run(key, String(value));
+  state.settings[key] = String(value);
+  save();
 }
 
-module.exports = { db, getSetting, setSetting };
+// ------------------------------------------------------------------ posts
+
+function listPosts({ limit = 100 } = {}) {
+  return [...state.posts].sort((a, b) => b.id - a.id).slice(0, limit);
+}
+
+function getPost(id) {
+  return state.posts.find((p) => p.id === Number(id)) || null;
+}
+
+function listDuePosts() {
+  const now = nowIso();
+  return state.posts
+    .filter((p) => p.status === 'scheduled' && p.scheduled_at && p.scheduled_at <= now)
+    .sort((a, b) => (a.scheduled_at < b.scheduled_at ? -1 : 1));
+}
+
+function insertPost({ topic = null, content, status = 'draft' }) {
+  const post = {
+    id: nextId('posts'),
+    topic,
+    content,
+    status,
+    scheduled_at: null,
+    fb_post_id: null,
+    error: null,
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  };
+  state.posts.push(post);
+  save();
+  return post;
+}
+
+function updatePost(id, fields) {
+  const post = getPost(id);
+  if (!post) return null;
+  Object.assign(post, fields, { updated_at: nowIso() });
+  save();
+  return post;
+}
+
+function deletePost(id) {
+  state.posts = state.posts.filter((p) => p.id !== Number(id));
+  save();
+}
+
+// ------------------------------------------------------------------ leads
+
+function listLeads({ limit = 200 } = {}) {
+  return [...state.leads]
+    .sort((a, b) => b.interest_score - a.interest_score || b.id - a.id)
+    .slice(0, limit);
+}
+
+function getLead(id) {
+  return state.leads.find((l) => l.id === Number(id)) || null;
+}
+
+function knownLeadObjectIds() {
+  return new Set(state.leads.map((l) => l.object_id));
+}
+
+function insertLead(fields) {
+  const lead = {
+    id: nextId('leads'),
+    source: fields.source,
+    fb_user_id: fields.fb_user_id || null,
+    fb_user_name: fields.fb_user_name || null,
+    object_id: fields.object_id,
+    post_id: fields.post_id || null,
+    message: fields.message || null,
+    ai_reply: fields.ai_reply || null,
+    replied: fields.replied ? 1 : 0,
+    interest_score: fields.interest_score || 0,
+    contact_info: fields.contact_info || null,
+    created_at: nowIso(),
+  };
+  state.leads.push(lead);
+  save();
+  return lead;
+}
+
+function updateLead(id, fields) {
+  const lead = getLead(id);
+  if (!lead) return null;
+  Object.assign(lead, fields);
+  save();
+  return lead;
+}
+
+// ----------------------------------------------------------------- topics
+
+function countUnusedTopics() {
+  return state.topics.filter((t) => !t.used).length;
+}
+
+function listUnusedTopics(limit = 5) {
+  return state.topics
+    .filter((t) => !t.used)
+    .sort((a, b) => a.id - b.id)
+    .slice(0, limit);
+}
+
+function insertTopic(title) {
+  const topic = { id: nextId('topics'), title, used: 0, created_at: nowIso() };
+  state.topics.push(topic);
+  save();
+  return topic;
+}
+
+function markTopicUsed(id) {
+  const topic = state.topics.find((t) => t.id === Number(id));
+  if (!topic) return;
+  topic.used = 1;
+  save();
+}
+
+module.exports = {
+  getSetting,
+  setSetting,
+  listPosts,
+  getPost,
+  listDuePosts,
+  insertPost,
+  updatePost,
+  deletePost,
+  listLeads,
+  getLead,
+  knownLeadObjectIds,
+  insertLead,
+  updateLead,
+  countUnusedTopics,
+  listUnusedTopics,
+  insertTopic,
+  markTopicUsed,
+};
