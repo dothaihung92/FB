@@ -54,9 +54,22 @@ khác cùng dùng, thêm họ vào vai trò **Tester** trong App, hoặc nộp *
 *(Muốn tự lấy token thủ công qua Graph API Explorer thay vì dùng nút "Kết nối Facebook"
 thì vẫn được — chỉ cần điền `FB_PAGE_ID` và `FB_PAGE_ACCESS_TOKEN` trực tiếp vào `.env`.)*
 
-## 3. Cấu hình Claude API (sinh nội dung AI)
+## 3. Cấu hình AI viết nội dung
 
-Lấy API key tại https://console.anthropic.com/ rồi điền `ANTHROPIC_API_KEY` vào `.env`.
+Chọn 1 trong 2 nhà cung cấp AI bằng biến `AI_PROVIDER` trong `.env` (chỉ cần điền API key
+của bên bạn chọn dùng):
+
+**Dùng Claude (mặc định, khuyến nghị chất lượng cao nhất):**
+```
+AI_PROVIDER=claude
+ANTHROPIC_API_KEY=<lấy tại https://console.anthropic.com/>
+```
+
+**Dùng Gemini (có gói miễn phí):**
+```
+AI_PROVIDER=gemini
+GEMINI_API_KEY=<lấy miễn phí tại https://aistudio.google.com/apikey>
+```
 
 ## 4. Chạy ứng dụng
 

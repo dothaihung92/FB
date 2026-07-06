@@ -1,0 +1,80 @@
+const Anthropic = require('@anthropic-ai/sdk');
+const {
+  BRAND_CONTEXT,
+  TOPICS_PROMPT,
+  POST_PROMPT,
+  ANALYZE_COMMENT_PROMPT,
+  parseTopicLines,
+  safeParseAnalysis,
+} = require('./shared');
+
+let _client = null;
+function client() {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('Thiếu ANTHROPIC_API_KEY trong .env');
+  }
+  if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return _client;
+}
+
+const MODEL = process.env.CLAUDE_MODEL || 'claude-opus-4-8';
+
+function extractText(message) {
+  const block = message.content.find((b) => b.type === 'text');
+  return block ? block.text.trim() : '';
+}
+
+async function generateTopics(count = 5) {
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 1024,
+    system: BRAND_CONTEXT,
+    messages: [{ role: 'user', content: TOPICS_PROMPT(count) }],
+  });
+  return parseTopicLines(extractText(res), count);
+}
+
+async function generatePost(topic) {
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 1200,
+    system: BRAND_CONTEXT,
+    messages: [{ role: 'user', content: POST_PROMPT(topic) }],
+  });
+  return extractText(res);
+}
+
+async function analyzeComment(commentText) {
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 600,
+    system: BRAND_CONTEXT,
+    output_config: {
+      format: {
+        type: 'json_schema',
+        schema: {
+          type: 'object',
+          properties: {
+            is_potential_lead: { type: 'boolean' },
+            interest_score: { type: 'integer' },
+            reason: { type: 'string' },
+            suggested_reply: { type: 'string' },
+            extracted_contact: { type: ['string', 'null'] },
+          },
+          required: [
+            'is_potential_lead',
+            'interest_score',
+            'reason',
+            'suggested_reply',
+            'extracted_contact',
+          ],
+          additionalProperties: false,
+        },
+      },
+    },
+    messages: [{ role: 'user', content: ANALYZE_COMMENT_PROMPT(commentText) }],
+  });
+  return safeParseAnalysis(extractText(res));
+}
+
+module.exports = { generateTopics, generatePost, analyzeComment, MODEL };
