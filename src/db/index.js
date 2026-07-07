@@ -16,8 +16,11 @@ function emptyStore() {
     posts: [],
     leads: [],
     topics: [],
+    adDrafts: [],
+    adCampaigns: [],
+    adSuggestions: [],
     settings: {},
-    seq: { posts: 0, leads: 0, topics: 0 },
+    seq: { posts: 0, leads: 0, topics: 0, adDrafts: 0, adCampaigns: 0, adSuggestions: 0 },
   };
 }
 
@@ -183,6 +186,109 @@ function markTopicUsed(id) {
   save();
 }
 
+// --------------------------------------------------------------- ad drafts
+
+function listAdDrafts({ limit = 100 } = {}) {
+  return [...state.adDrafts].sort((a, b) => b.id - a.id).slice(0, limit);
+}
+
+function getAdDraft(id) {
+  return state.adDrafts.find((d) => d.id === Number(id)) || null;
+}
+
+function insertAdDraft({ platform, keyword, intent, headline, description, cta, daily_budget_vnd }) {
+  const draft = {
+    id: nextId('adDrafts'),
+    platform,
+    keyword,
+    intent: intent || null,
+    headline,
+    description,
+    cta,
+    daily_budget_vnd: daily_budget_vnd || null,
+    status: 'pending',
+    created_at: nowIso(),
+  };
+  state.adDrafts.push(draft);
+  save();
+  return draft;
+}
+
+function updateAdDraft(id, fields) {
+  const draft = getAdDraft(id);
+  if (!draft) return null;
+  Object.assign(draft, fields);
+  save();
+  return draft;
+}
+
+// ------------------------------------------------------------ ad campaigns
+
+function listAdCampaigns({ limit = 100 } = {}) {
+  return [...state.adCampaigns].sort((a, b) => b.id - a.id).slice(0, limit);
+}
+
+function getAdCampaign(id) {
+  return state.adCampaigns.find((c) => c.id === Number(id)) || null;
+}
+
+function insertAdCampaign({ platform, draft_id, external_id, simulated, payload }) {
+  const campaign = {
+    id: nextId('adCampaigns'),
+    platform,
+    draft_id: draft_id || null,
+    external_id,
+    simulated: Boolean(simulated),
+    payload: payload || null,
+    status: 'active',
+    created_at: nowIso(),
+  };
+  state.adCampaigns.push(campaign);
+  save();
+  return campaign;
+}
+
+function updateAdCampaign(id, fields) {
+  const campaign = getAdCampaign(id);
+  if (!campaign) return null;
+  Object.assign(campaign, fields);
+  save();
+  return campaign;
+}
+
+// ---------------------------------------------------------- ad suggestions
+
+function listAdSuggestions({ limit = 100 } = {}) {
+  return [...state.adSuggestions].sort((a, b) => b.id - a.id).slice(0, limit);
+}
+
+function getAdSuggestion(id) {
+  return state.adSuggestions.find((s) => s.id === Number(id)) || null;
+}
+
+function insertAdSuggestion({ campaign_id, action, target, reason }) {
+  const suggestion = {
+    id: nextId('adSuggestions'),
+    campaign_id: campaign_id || null,
+    action,
+    target,
+    reason,
+    status: 'pending',
+    created_at: nowIso(),
+  };
+  state.adSuggestions.push(suggestion);
+  save();
+  return suggestion;
+}
+
+function updateAdSuggestion(id, fields) {
+  const suggestion = getAdSuggestion(id);
+  if (!suggestion) return null;
+  Object.assign(suggestion, fields);
+  save();
+  return suggestion;
+}
+
 module.exports = {
   getSetting,
   setSetting,
@@ -201,4 +307,16 @@ module.exports = {
   listUnusedTopics,
   insertTopic,
   markTopicUsed,
+  listAdDrafts,
+  getAdDraft,
+  insertAdDraft,
+  updateAdDraft,
+  listAdCampaigns,
+  getAdCampaign,
+  insertAdCampaign,
+  updateAdCampaign,
+  listAdSuggestions,
+  getAdSuggestion,
+  insertAdSuggestion,
+  updateAdSuggestion,
 };

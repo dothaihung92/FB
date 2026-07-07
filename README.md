@@ -16,6 +16,10 @@ cá nhân, không spam hàng loạt) — an toàn với chính sách của Meta 
   tự động phản hồi những bình luận có khả năng là khách hàng thật.
 - 🔒 Không thu thập/scrape thông tin cá nhân của người dùng khác — chỉ ghi nhận thông tin
   liên hệ mà khách **tự nguyện để lại** trong bình luận công khai trên Page của bạn.
+- 📢 **Quảng cáo AI (mới):** AI đề xuất từ khoá + nội dung quảng cáo cho Facebook Ads/Google Ads,
+  bạn duyệt rồi mới đẩy chiến dịch lên (luôn ở trạng thái tạm dừng), có chế độ mô phỏng an toàn
+  (không tốn tiền) và trần ngân sách/ngày. Xem hướng dẫn thiết lập tài khoản trong
+  `HUONG_DAN_ADS.md`.
 
 ## 1. Cài đặt
 

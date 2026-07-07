@@ -34,6 +34,23 @@ router.get('/', (req, res) => {
         process.env.GLM_BASE_URL ||
         'https://open.bigmodel.cn/api/paas/v4',
     },
+    ads: {
+      dryRun: store.getSetting('ADS_DRY_RUN', 'true') !== 'false',
+      budgetCap: store.getSetting('ADS_DAILY_BUDGET_CAP_VND', ''),
+      fbAdAccountId: store.getSetting('FB_AD_ACCOUNT_ID', ''),
+      fbAdsTokenSet: Boolean(store.getSetting('FB_ADS_ACCESS_TOKEN')),
+      fbAdsTokenMasked: maskKey(store.getSetting('FB_ADS_ACCESS_TOKEN')),
+      fbPixelId: store.getSetting('FB_PIXEL_ID', ''),
+      googleDeveloperTokenSet: Boolean(store.getSetting('GOOGLE_ADS_DEVELOPER_TOKEN')),
+      googleDeveloperTokenMasked: maskKey(store.getSetting('GOOGLE_ADS_DEVELOPER_TOKEN')),
+      googleClientId: store.getSetting('GOOGLE_ADS_CLIENT_ID', ''),
+      googleClientSecretSet: Boolean(store.getSetting('GOOGLE_ADS_CLIENT_SECRET')),
+      googleClientSecretMasked: maskKey(store.getSetting('GOOGLE_ADS_CLIENT_SECRET')),
+      googleRefreshTokenSet: Boolean(store.getSetting('GOOGLE_ADS_REFRESH_TOKEN')),
+      googleRefreshTokenMasked: maskKey(store.getSetting('GOOGLE_ADS_REFRESH_TOKEN')),
+      googleCustomerId: store.getSetting('GOOGLE_ADS_CUSTOMER_ID', ''),
+      googleLoginCustomerId: store.getSetting('GOOGLE_ADS_LOGIN_CUSTOMER_ID', ''),
+    },
     flash: req.query.flash || null,
   });
 });
@@ -56,6 +73,24 @@ router.post('/', (req, res) => {
   if (req.body.glm_base_url) store.setSetting('GLM_BASE_URL', req.body.glm_base_url.trim());
 
   res.redirect('/settings?flash=' + encodeURIComponent('Đã lưu cài đặt AI.'));
+});
+
+router.post('/ads', (req, res) => {
+  store.setSetting('ADS_DRY_RUN', req.body.ads_dry_run === 'false' ? 'false' : 'true');
+  if (req.body.ads_budget_cap_vnd) store.setSetting('ADS_DAILY_BUDGET_CAP_VND', req.body.ads_budget_cap_vnd.trim());
+
+  if (req.body.fb_ad_account_id) store.setSetting('FB_AD_ACCOUNT_ID', req.body.fb_ad_account_id.trim());
+  if (req.body.fb_ads_access_token) store.setSetting('FB_ADS_ACCESS_TOKEN', req.body.fb_ads_access_token.trim());
+  if (req.body.fb_pixel_id) store.setSetting('FB_PIXEL_ID', req.body.fb_pixel_id.trim());
+
+  if (req.body.google_ads_developer_token) store.setSetting('GOOGLE_ADS_DEVELOPER_TOKEN', req.body.google_ads_developer_token.trim());
+  if (req.body.google_ads_client_id) store.setSetting('GOOGLE_ADS_CLIENT_ID', req.body.google_ads_client_id.trim());
+  if (req.body.google_ads_client_secret) store.setSetting('GOOGLE_ADS_CLIENT_SECRET', req.body.google_ads_client_secret.trim());
+  if (req.body.google_ads_refresh_token) store.setSetting('GOOGLE_ADS_REFRESH_TOKEN', req.body.google_ads_refresh_token.trim());
+  if (req.body.google_ads_customer_id) store.setSetting('GOOGLE_ADS_CUSTOMER_ID', req.body.google_ads_customer_id.trim());
+  if (req.body.google_ads_login_customer_id) store.setSetting('GOOGLE_ADS_LOGIN_CUSTOMER_ID', req.body.google_ads_login_customer_id.trim());
+
+  res.redirect('/settings?flash=' + encodeURIComponent('Đã lưu cài đặt Ads.'));
 });
 
 router.post('/test', async (req, res) => {

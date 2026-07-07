@@ -1,0 +1,109 @@
+<%- include('partials/header', { active: 'ads' }) %>
+
+<% if (flash) { %><div class="flash"><%= flash %></div><% } %>
+
+<div class="card">
+  <h3>⚙️ Trạng thái kết nối Ads</h3>
+  <p class="meta">
+    Chế độ: <span class="badge <%= dryRun ? 'draft' : 'published' %>"><%= dryRun ? 'MÔ PHỎNG (Dry-run) - an toàn, chưa tốn tiền' : 'THẬT - đang có thể tiêu tiền' %></span>
+    · Facebook Ads: <span class="badge <%= fbConfigured ? 'published' : 'draft' %>"><%= fbConfigured ? 'đã cấu hình' : 'chưa cấu hình' %></span>
+    · Google Ads: <span class="badge <%= googleConfigured ? 'published' : 'draft' %>"><%= googleConfigured ? 'đã cấu hình' : 'chưa cấu hình' %></span>
+    <% if (budgetCap) { %> · Trần ngân sách/ngày: <%= budgetCap.toLocaleString('vi-VN') %>đ<% } %>
+  </p>
+  <p class="meta">Vào <a href="/settings">Cài đặt Ads</a> để nhập tài khoản/token, hoặc xem
+    <code>HUONG_DAN_ADS.md</code> ở thư mục gốc để biết cách lấy từng thông tin từ đầu.</p>
+</div>
+
+<div class="card">
+  <h3>Sinh đề xuất từ khoá + nội dung quảng cáo bằng AI</h3>
+  <form class="row" method="post" action="/ads/drafts/generate">
+    <label>Nền tảng:
+      <select name="platform">
+        <option value="facebook">Facebook Ads</option>
+        <option value="google">Google Ads</option>
+      </select>
+    </label>
+    <label>Số từ khoá: <input type="text" name="count" value="5" style="width:40px" /></label>
+    <label>Ngân sách/ngày (VNĐ): <input type="text" name="daily_budget_vnd" placeholder="VD: 100000" style="width:100px" /></label>
+    <button type="submit">✨ Sinh đề xuất</button>
+  </form>
+</div>
+
+<h2>Đề xuất chờ duyệt</h2>
+<% if (!drafts.length) { %>
+  <div class="empty">Chưa có đề xuất nào. Hãy bấm "Sinh đề xuất" ở trên.</div>
+<% } %>
+<% drafts.forEach(function(d) { %>
+  <div class="card">
+    <div class="meta">
+      #<%= d.id %> · <span class="badge draft"><%= d.platform === 'google' ? 'Google Ads' : 'Facebook Ads' %></span>
+      · từ khoá: <strong><%= d.keyword %></strong>
+      <% if (d.intent) { %> · ý định: <%= d.intent %><% } %>
+    </div>
+    <form method="post" action="/ads/drafts/<%= d.id %>/edit">
+      <div class="row">
+        <label style="flex:1;">Headline: <input type="text" name="headline" value="<%= d.headline %>" style="width:100%;" /></label>
+      </div>
+      <div class="row">
+        <label style="flex:1;">Description: <input type="text" name="description" value="<%= d.description %>" style="width:100%;" /></label>
+      </div>
+      <div class="row">
+        <label>CTA: <input type="text" name="cta" value="<%= d.cta %>" style="width:160px;" /></label>
+        <label>Ngân sách/ngày (VNĐ): <input type="text" name="daily_budget_vnd" value="<%= d.daily_budget_vnd || '' %>" style="width:120px;" /></label>
+        <button type="submit" class="secondary">💾 Lưu</button>
+      </div>
+    </form>
+    <div class="row">
+      <form class="inline" method="post" action="/ads/drafts/<%= d.id %>/approve"
+            onsubmit="return confirm('Đẩy chiến dịch này lên nền tảng (ở trạng thái tạm dừng)?')">
+        <button type="submit" class="success">🚀 Duyệt &amp; đẩy lên</button>
+      </form>
+      <form class="inline" method="post" action="/ads/drafts/<%= d.id %>/reject">
+        <button type="submit" class="danger">✋ Từ chối</button>
+      </form>
+    </div>
+  </div>
+<% }); %>
+
+<h2>Chiến dịch đã đẩy lên</h2>
+<% if (!campaigns.length) { %>
+  <div class="empty">Chưa có chiến dịch nào.</div>
+<% } %>
+<% campaigns.forEach(function(c) { %>
+  <div class="card">
+    <div class="meta">
+      #<%= c.id %> · <span class="badge draft"><%= c.platform === 'google' ? 'Google Ads' : 'Facebook Ads' %></span>
+      · external_id: <%= c.external_id %>
+      <% if (c.simulated) { %> · <span class="badge draft">mô phỏng</span><% } %>
+      · trạng thái: <%= c.status %>
+    </div>
+  </div>
+<% }); %>
+
+<div class="card">
+  <h3>Đề xuất tối ưu (từ job giám sát định kỳ)</h3>
+  <form method="post" action="/ads/monitor/run" style="margin-bottom:8px;">
+    <button type="submit" class="secondary">🔍 Quét hiệu suất &amp; sinh đề xuất ngay</button>
+  </form>
+  <% if (!suggestions.length) { %>
+    <div class="empty">Chưa có đề xuất tối ưu nào.</div>
+  <% } %>
+  <% suggestions.forEach(function(s) { %>
+    <div class="card">
+      <div class="meta">
+        #<%= s.id %> · hành động: <strong><%= s.action %></strong> · mục tiêu: <%= s.target %>
+      </div>
+      <p><%= s.reason %></p>
+      <div class="row">
+        <form class="inline" method="post" action="/ads/suggestions/<%= s.id %>/approve">
+          <button type="submit" class="success">✔ Duyệt</button>
+        </form>
+        <form class="inline" method="post" action="/ads/suggestions/<%= s.id %>/reject">
+          <button type="submit" class="danger">✋ Bỏ qua</button>
+        </form>
+      </div>
+    </div>
+  <% }); %>
+</div>
+
+<%- include('partials/footer') %>

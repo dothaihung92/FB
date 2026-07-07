@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { runContentGeneration } = require('./contentGen');
 const { runPublishDue } = require('./publish');
 const { runCommentScan } = require('./commentScan');
+const { runAdsMonitor } = require('./adsMonitor');
 
 function log(job, payload) {
   console.log(`[${new Date().toISOString()}] [${job}]`, JSON.stringify(payload));
@@ -47,6 +48,21 @@ function startScheduler() {
         if (leads.length) log('comment-scan', leads);
       } catch (err) {
         log('comment-scan-error', { error: err.message });
+      }
+    },
+    { timezone: tz }
+  );
+
+  // Mỗi 30 phút: quét hiệu suất chiến dịch Ads đang chạy, AI đề xuất tối ưu
+  // (chỉ lưu đề xuất chờ duyệt trên dashboard, không tự động áp dụng).
+  cron.schedule(
+    '*/30 * * * *',
+    async () => {
+      try {
+        const created = await runAdsMonitor();
+        if (created.length) log('ads-monitor', created);
+      } catch (err) {
+        log('ads-monitor-error', { error: err.message });
       }
     },
     { timezone: tz }

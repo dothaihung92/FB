@@ -5,8 +5,13 @@ const {
   TOPICS_PROMPT,
   POST_PROMPT,
   ANALYZE_COMMENT_PROMPT,
+  AD_KEYWORDS_PROMPT,
+  AD_COPY_PROMPT,
+  AD_OPTIMIZATION_PROMPT,
   parseTopicLines,
   safeParseAnalysis,
+  safeParseJsonArray,
+  safeParseAdCopy,
 } = require('./shared');
 
 function apiKey() {
@@ -63,10 +68,63 @@ async function analyzeComment(commentText) {
   return safeParseAnalysis(result.response.text().trim());
 }
 
+async function suggestAdKeywords({ platform = 'facebook', count = 8 } = {}) {
+  const schema = {
+    type: SchemaType.ARRAY,
+    items: {
+      type: SchemaType.OBJECT,
+      properties: {
+        keyword: { type: SchemaType.STRING },
+        intent: { type: SchemaType.STRING },
+        est_competition: { type: SchemaType.STRING },
+      },
+      required: ['keyword', 'intent', 'est_competition'],
+    },
+  };
+  const result = await jsonModel(schema).generateContent(AD_KEYWORDS_PROMPT(platform, count));
+  return safeParseJsonArray(result.response.text().trim()).slice(0, count);
+}
+
+async function generateAdCopy({ platform = 'facebook', keyword }) {
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      headline: { type: SchemaType.STRING },
+      description: { type: SchemaType.STRING },
+      cta: { type: SchemaType.STRING },
+    },
+    required: ['headline', 'description', 'cta'],
+  };
+  const result = await jsonModel(schema).generateContent(AD_COPY_PROMPT(platform, keyword));
+  return safeParseAdCopy(result.response.text().trim());
+}
+
+async function suggestOptimization({ campaignStats }) {
+  const schema = {
+    type: SchemaType.ARRAY,
+    items: {
+      type: SchemaType.OBJECT,
+      properties: {
+        action: { type: SchemaType.STRING },
+        target: { type: SchemaType.STRING },
+        reason: { type: SchemaType.STRING },
+      },
+      required: ['action', 'target', 'reason'],
+    },
+  };
+  const result = await jsonModel(schema).generateContent(
+    AD_OPTIMIZATION_PROMPT(JSON.stringify(campaignStats))
+  );
+  return safeParseJsonArray(result.response.text().trim());
+}
+
 module.exports = {
   generateTopics,
   generatePost,
   analyzeComment,
+  suggestAdKeywords,
+  generateAdCopy,
+  suggestOptimization,
   get MODEL() {
     return currentModel();
   },

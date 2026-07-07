@@ -69,4 +69,72 @@
   </form>
 </div>
 
+<div class="card">
+  <h3>📢 Cài đặt Ads (Facebook Ads + Google Ads)</h3>
+  <p class="meta">Chưa có tài khoản/token? Xem hướng dẫn từng bước trong <code>HUONG_DAN_ADS.md</code>
+    ở thư mục gốc dự án. Mặc định <strong>chế độ mô phỏng (Dry-run) đang BẬT</strong> — mọi chiến dịch
+    "duyệt & đẩy lên" ở tab Quảng cáo sẽ chỉ giả lập, không tốn tiền, cho tới khi bạn tắt ở đây.</p>
+
+  <form method="post" action="/settings/ads">
+    <div class="card" style="background:#0c1526;">
+      <label>
+        <input type="checkbox" name="ads_dry_run" value="false" <%= ads.dryRun ? '' : 'checked' %> />
+        Tắt chế độ mô phỏng (chạy quảng cáo THẬT — chỉ tick khi đã kiểm tra kỹ token/ngân sách)
+      </label>
+      <div class="row">
+        <label>Trần ngân sách/ngày (VNĐ) — AI không được đề xuất vượt mức này:
+          <input type="text" name="ads_budget_cap_vnd" value="<%= ads.budgetCap %>" placeholder="VD: 200000" />
+        </label>
+      </div>
+    </div>
+
+    <div class="card" style="background:#0c1526;">
+      <strong>Facebook Ads</strong>
+      <div class="row">
+        <label style="flex:1;">Ad Account ID: <input type="text" name="fb_ad_account_id" value="<%= ads.fbAdAccountId %>" placeholder="act_123456789" style="width:100%;" /></label>
+      </div>
+      <div class="row">
+        <label style="flex:1;">Access Token (quyền ads_management/ads_read):
+          <input type="text" name="fb_ads_access_token" placeholder="<%= ads.fbAdsTokenSet ? ads.fbAdsTokenMasked : 'EAAG...' %>" style="width:100%;" />
+        </label>
+      </div>
+      <div class="row">
+        <label style="flex:1;">Pixel ID (để retarget):
+          <input type="text" name="fb_pixel_id" value="<%= ads.fbPixelId %>" style="width:100%;" />
+        </label>
+      </div>
+    </div>
+
+    <div class="card" style="background:#0c1526;">
+      <strong>Google Ads</strong>
+      <div class="row">
+        <label style="flex:1;">Developer Token:
+          <input type="text" name="google_ads_developer_token" placeholder="<%= ads.googleDeveloperTokenSet ? ads.googleDeveloperTokenMasked : '...' %>" style="width:100%;" />
+        </label>
+      </div>
+      <div class="row">
+        <label style="flex:1;">OAuth Client ID: <input type="text" name="google_ads_client_id" value="<%= ads.googleClientId %>" style="width:100%;" /></label>
+      </div>
+      <div class="row">
+        <label style="flex:1;">OAuth Client Secret:
+          <input type="text" name="google_ads_client_secret" placeholder="<%= ads.googleClientSecretSet ? ads.googleClientSecretMasked : '...' %>" style="width:100%;" />
+        </label>
+      </div>
+      <div class="row">
+        <label style="flex:1;">Refresh Token:
+          <input type="text" name="google_ads_refresh_token" placeholder="<%= ads.googleRefreshTokenSet ? ads.googleRefreshTokenMasked : '...' %>" style="width:100%;" />
+        </label>
+      </div>
+      <div class="row">
+        <label>Customer ID: <input type="text" name="google_ads_customer_id" value="<%= ads.googleCustomerId %>" placeholder="123-456-7890" /></label>
+        <label>Login Customer ID (nếu dùng Manager Account): <input type="text" name="google_ads_login_customer_id" value="<%= ads.googleLoginCustomerId %>" /></label>
+      </div>
+    </div>
+
+    <div class="row">
+      <button type="submit">💾 Lưu cài đặt Ads</button>
+    </div>
+  </form>
+</div>
+
 <%- include('partials/footer') %>

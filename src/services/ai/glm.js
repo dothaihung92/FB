@@ -5,8 +5,13 @@ const {
   TOPICS_PROMPT,
   POST_PROMPT,
   ANALYZE_COMMENT_PROMPT,
+  AD_KEYWORDS_PROMPT,
+  AD_COPY_PROMPT,
+  AD_OPTIMIZATION_PROMPT,
   parseTopicLines,
   safeParseAnalysis,
+  safeParseJsonArray,
+  safeParseAdCopy,
 } = require('./shared');
 
 // GLM (Zhipu AI / Z.ai) dung API dang tuong thich OpenAI (chat completions),
@@ -70,10 +75,48 @@ chữ nào khác ngoài JSON: {"is_potential_lead": boolean, "interest_score": n
   return safeParseAnalysis(text);
 }
 
+// GLM's json_object mode chỉ chấp nhận JSON object ở cấp cao nhất (không phải
+// array trần) - nên yêu cầu model bọc mảng trong khoá "items" rồi tự bóc ra.
+const ARRAY_WRAP_HINT = `Trả lời DUY NHẤT bằng một JSON object hợp lệ dạng {"items": [...]}, không thêm chữ nào khác.`;
+
+async function suggestAdKeywords({ platform = 'facebook', count = 8 } = {}) {
+  const text = await chat(`${AD_KEYWORDS_PROMPT(platform, count)}\n\n${ARRAY_WRAP_HINT}`, {
+    jsonMode: true,
+    maxTokens: 900,
+  });
+  try {
+    const parsed = JSON.parse(text);
+    return (Array.isArray(parsed.items) ? parsed.items : []).slice(0, count);
+  } catch {
+    return [];
+  }
+}
+
+async function generateAdCopy({ platform = 'facebook', keyword }) {
+  const text = await chat(AD_COPY_PROMPT(platform, keyword), { jsonMode: true, maxTokens: 300 });
+  return safeParseAdCopy(text);
+}
+
+async function suggestOptimization({ campaignStats }) {
+  const text = await chat(
+    `${AD_OPTIMIZATION_PROMPT(JSON.stringify(campaignStats))}\n\n${ARRAY_WRAP_HINT}`,
+    { jsonMode: true, maxTokens: 900 }
+  );
+  try {
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed.items) ? parsed.items : [];
+  } catch {
+    return [];
+  }
+}
+
 module.exports = {
   generateTopics,
   generatePost,
   analyzeComment,
+  suggestAdKeywords,
+  generateAdCopy,
+  suggestOptimization,
   get MODEL() {
     return currentModel();
   },

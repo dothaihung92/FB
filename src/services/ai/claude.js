@@ -5,8 +5,13 @@ const {
   TOPICS_PROMPT,
   POST_PROMPT,
   ANALYZE_COMMENT_PROMPT,
+  AD_KEYWORDS_PROMPT,
+  AD_COPY_PROMPT,
+  AD_OPTIMIZATION_PROMPT,
   parseTopicLines,
   safeParseAnalysis,
+  safeParseJsonArray,
+  safeParseAdCopy,
 } = require('./shared');
 
 // Doc cau hinh tu Settings (luu qua dashboard, ap dung ngay khong can khoi
@@ -85,10 +90,43 @@ async function analyzeComment(commentText) {
   return safeParseAnalysis(extractText(res));
 }
 
+async function suggestAdKeywords({ platform = 'facebook', count = 8 } = {}) {
+  const res = await client().messages.create({
+    model: currentModel(),
+    max_tokens: 1200,
+    system: BRAND_CONTEXT,
+    messages: [{ role: 'user', content: AD_KEYWORDS_PROMPT(platform, count) }],
+  });
+  return safeParseJsonArray(extractText(res)).slice(0, count);
+}
+
+async function generateAdCopy({ platform = 'facebook', keyword }) {
+  const res = await client().messages.create({
+    model: currentModel(),
+    max_tokens: 400,
+    system: BRAND_CONTEXT,
+    messages: [{ role: 'user', content: AD_COPY_PROMPT(platform, keyword) }],
+  });
+  return safeParseAdCopy(extractText(res));
+}
+
+async function suggestOptimization({ campaignStats }) {
+  const res = await client().messages.create({
+    model: currentModel(),
+    max_tokens: 1200,
+    system: BRAND_CONTEXT,
+    messages: [{ role: 'user', content: AD_OPTIMIZATION_PROMPT(JSON.stringify(campaignStats)) }],
+  });
+  return safeParseJsonArray(extractText(res));
+}
+
 module.exports = {
   generateTopics,
   generatePost,
   analyzeComment,
+  suggestAdKeywords,
+  generateAdCopy,
+  suggestOptimization,
   get MODEL() {
     return currentModel();
   },

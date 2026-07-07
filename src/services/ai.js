@@ -39,10 +39,25 @@ async function analyzeComment(...args) {
   return getImpl().analyzeComment(...args);
 }
 
+async function suggestAdKeywords(...args) {
+  return getImpl().suggestAdKeywords(...args);
+}
+
+async function generateAdCopy(...args) {
+  return getImpl().generateAdCopy(...args);
+}
+
+async function suggestOptimization(...args) {
+  return getImpl().suggestOptimization(...args);
+}
+
 module.exports = {
   generateTopics,
   generatePost,
   analyzeComment,
+  suggestAdKeywords,
+  generateAdCopy,
+  suggestOptimization,
   get provider() {
     return currentProvider();
   },

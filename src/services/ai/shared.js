@@ -43,11 +43,55 @@ function safeParseAnalysis(text) {
   }
 }
 
+const AD_KEYWORDS_PROMPT = (platform, count) => `Đề xuất ${count} từ khoá quảng cáo ${platform === 'google' ? 'Google Ads (Search)' : 'Facebook Ads'}
+nhắm đúng chủ DN nhỏ/HKD đang tìm/cần dịch vụ kế toán - thuế - thành lập doanh nghiệp tại Việt Nam.
+Ưu tiên các từ khoá có ý định tìm dịch vụ rõ ràng (transactional), không phải từ khoá thông tin chung chung.
+Chỉ trả về DUY NHẤT một JSON array hợp lệ, không thêm chữ nào khác, đúng dạng:
+[{"keyword": string, "intent": string mô tả ngắn ý định tìm kiếm, "est_competition": "thấp"|"trung bình"|"cao"}]`;
+
+const AD_COPY_PROMPT = (platform, keyword) => `Viết nội dung quảng cáo ${platform === 'google' ? 'Google Search Ads' : 'Facebook Ads'}
+cho từ khoá/chủ đề: "${keyword}", nhắm chủ DN nhỏ/HKD cần dịch vụ kế toán - thuế.
+${platform === 'google' ? 'Headline tối đa 30 ký tự, description tối đa 90 ký tự (giới hạn Google Search Ads).' : 'Headline tối đa 40 ký tự, description tối đa 125 ký tự.'}
+Chỉ trả về DUY NHẤT một JSON object hợp lệ, không thêm chữ nào khác, đúng dạng:
+{"headline": string, "description": string, "cta": string (VD: "Tìm hiểu thêm", "Liên hệ ngay")}`;
+
+const AD_OPTIMIZATION_PROMPT = (statsJson) => `Đây là số liệu hiệu suất các chiến dịch quảng cáo dịch vụ kế toán đang chạy
+(CPC/CPA/spend/clicks/conversions theo từ khoá hoặc chiến dịch):
+${statsJson}
+
+Hãy phân tích và đề xuất tối đa 5 hành động tối ưu cụ thể (VD: tắt từ khoá có CPA quá cao và không
+ra chuyển đổi, tăng ngân sách cho từ khoá đang hiệu quả, giảm ngân sách chiến dịch kém, thêm từ
+khoá liên quan tiềm năng). Chỉ trả về DUY NHẤT một JSON array hợp lệ, không thêm chữ nào khác,
+đúng dạng:
+[{"action": "pause_keyword"|"increase_budget"|"decrease_budget"|"new_keyword", "target": string, "reason": string ngắn gọn giải thích tại sao}]`;
+
+function safeParseJsonArray(text) {
+  try {
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function safeParseAdCopy(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { headline: '', description: '', cta: '' };
+  }
+}
+
 module.exports = {
   BRAND_CONTEXT,
   TOPICS_PROMPT,
   POST_PROMPT,
   ANALYZE_COMMENT_PROMPT,
+  AD_KEYWORDS_PROMPT,
+  AD_COPY_PROMPT,
+  AD_OPTIMIZATION_PROMPT,
   parseTopicLines,
   safeParseAnalysis,
+  safeParseJsonArray,
+  safeParseAdCopy,
 };
